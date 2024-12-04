@@ -1,1 +1,8 @@
-
+requests
+beautifulsoup4
+Pillow
+transformers
+torch
+torchvision
+torchaudio
+numpy
