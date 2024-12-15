@@ -18,10 +18,9 @@ class Google:
         - links: corresponding links found in each result
     
     Public Methods:
-        - run(): Search
+        - search(): Search
         - summarise(): Show results of query
 
-    
     Constructor Methods:
         _construct(): Given search terms, create a URL. Modify to add extra search parameters as needed
         _search(): Send request to get HTML of search page
@@ -38,7 +37,7 @@ class Google:
         self.links: Optional[List[str]] = None
 
     # Public Methods
-    def run(self, num: int = 10) -> "Google":
+    def search(self, num: int = 10) -> "Google":
         self._construct(nums=num)._search()._getResults()._getURLs()
         return self
     
@@ -93,6 +92,7 @@ class Google:
         for result in self.results:
             links = result.find_all("a", href=True)
             url_list = [link['href'] for link in links if link.get('href')]
+            url_list = list(set(url_list))
             urls.append(url_list)
         self.links = urls
         return self
