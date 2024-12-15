@@ -39,6 +39,7 @@ class Google:
     def Links(self):
         return self.links
 
+
     # Public Methods
     def search(self, num: int = 10) -> "Google":
         self._construct(nums=num)._search()._getResults()._getURLs()
@@ -62,7 +63,7 @@ class Google:
         search = self.searchTerms.replace(" ", "+")
         search = search.replace(":", "%3A")
         search = search.replace("/", r"%2F")
-        url = "https://www.google.com/search?q=" + search + "&num=" + str(nums)
+        url = "https://www.google.com/search?q=" + search + "+site%3Alinkedin.com%2Fin&num=" + str(nums)
         self.url = url
         return self
     
