@@ -36,6 +36,9 @@ class Google:
         self.results: Optional[List[str]] = None
         self.links: Optional[List[str]] = None
 
+    def Links(self):
+        return self.links
+
     # Public Methods
     def search(self, num: int = 10) -> "Google":
         self._construct(nums=num)._search()._getResults()._getURLs()
