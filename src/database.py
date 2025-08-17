@@ -22,7 +22,7 @@ class Database:
         client = MongoClient(self.uri)
         db = client["test"]["Leads"]
         cursor = db.find({}, {"_id": 0})
-        df = pd.DataFrame(list(cursor))[["qualified", "name", "headline", "location", "link"]]
+        df = pd.DataFrame(list(cursor))[["name", "headline", "location", "link", "model", "actual"]]
         self.df = df
         client.close()
         return df
