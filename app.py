@@ -28,6 +28,8 @@ col1, col2 = st.columns(2)
 # st.write(st.session_state.df)
 
 def display_table(df, key: str):
+    if df.empty:
+        return pd.DataFrame(), pd.DataFrame()
     gb = GridOptionsBuilder.from_dataframe(df)
     gb.configure_default_column(
         wrapText=True,
@@ -89,4 +91,4 @@ if st.button("Update actual classification"):
                 "actual": not item["actual"]
             })
     st.session_state.df = client.getDb()
-    st.write(st.session_state.df)
+    st.write("Please now click the Reload Data button")
