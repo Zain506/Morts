@@ -21,10 +21,11 @@ class Database:
     def getDb(self): # Retrieve information from database
         client = MongoClient(self.uri)
         db = client["test"]["Leads"]
-        cursor = db.find({})
-        df = pd.DataFrame(list(cursor))
+        cursor = db.find({}, {"_id": 0})
+        df = pd.DataFrame(list(cursor))[["qualified", "name", "headline", "location", "link"]]
         self.df = df
         client.close()
+        return df
 
     def update(self, filter: dict, replacement: dict): # Update record
         """
