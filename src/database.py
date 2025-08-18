@@ -10,7 +10,7 @@ import pandas as pd
 
 class Database:
     """
-    Connection to MongoDB Database and load to Pandas
+    Initialise. Then .getDb() returns the database as pd.DataFrame
     """
     def __init__(self): # initialise connection to DB
         load_dotenv()
