@@ -1,94 +1,90 @@
-"""
-Date: 17/8/2025
-Description: Streamlit app to interpret MongoDB and classify
-"""
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
-from src import *
 import pandas as pd
+from src import *
+
+st.set_page_config(layout="wide", page_title="Customer Relationship Manager")
 
 if "client" not in st.session_state:
-    client = Database()
 
-# st.write(df)
-if "df" not in st.session_state:
-    st.session_state.df = client.getDb()
+    st.session_state.client = Database()
+    st.session_state.df = st.session_state.client.getDb()
+# db = df["name", "location", "headline", "link"]
 
-st.title("Leads")
-st.set_page_config(layout="wide")   # make the page use the full width
-st.write("Select any incorrectly classified columns")
-
-if st.button("Reload Data"):
-    st.session_state.df = client.getDb()
-    # st.session_state.pop("selected_qual", None)
-    # st.session_state.pop("selected_unqual", None)
-
-# Columns
-col1, col2 = st.columns(2)
 # st.write(st.session_state.df)
 
-def display_table(df, key: str):
-    if df.empty:
-        return pd.DataFrame(), pd.DataFrame()
-    gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_default_column(
-        wrapText=True,
-        autoHeight=True,
-        resizable=True,
-        flex=1
-    )
-    gb.configure_selection(selection_mode="multiple", use_checkbox=True)
-    grid_options = gb.build()
+tab1, tab2, tab3 = st.tabs(["Good leads", "Bad leads", "Unclassified"])
 
-    grid_response = AgGrid(
-        df,
-        gridOptions=grid_options,
-        fit_columns_on_grid_load=True,
-        key=key,
-        update_mode=GridUpdateMode.SELECTION_CHANGED,  # reacts to cell edits
-        allow_unsafe_jscode=True,
-        reload_data=False
-    )
+def render_table(df, bool, key):
+    return st.data_editor(
+        df[df["actual"] == bool].reset_index(drop=True),
+        key = key,
+        column_config={
+            "headline": st.column_config.TextColumn("Headline", width="small", disabled=True),  # "small" | "medium" | "large"
+            "link": st.column_config.LinkColumn("Profile", disabled=True, width="small"),
+            "name": st.column_config.TextColumn("Name", width="auto", disabled=True),
+            "model": st.column_config.CheckboxColumn("Model Prediction", disabled=True),
+            "actual": st.column_config.CheckboxColumn("Real Classification")
+            },
+        hide_index=True,
+        use_container_width=True
+        )
+with tab1:
+    update = render_table(st.session_state.df, key="table1", bool=True)
+    if st.button("Commit to database"):
+        new = update.to_dict(orient="records")
+        # st.write(new)
+        for item in new:
+            st.session_state.client.update({"link": item["link"]}, item)
+        del st.session_state["client"]
+        st.rerun()
 
-    updated_df = pd.DataFrame(grid_response["data"])
-    selected_rows = pd.DataFrame(grid_response["selected_rows"])
+with tab2:
+    update = render_table(st.session_state.df, key="table2", bool=False)
+    if st.button("Commit to a database"):
+        new = update.to_dict(orient="records")
+        for item in new:
+            st.session_state.client.update({"link": item["link"]}, item)
+        del st.session_state["client"]
+        st.rerun()
 
-    return updated_df, selected_rows
 
-with col1:
-    st.header("Good leads")
-    updated_qual, selected_qual = display_table(
-        st.session_state.df[st.session_state.df["actual"] == True],
-        "qualified"
-    )
+with tab3:
+    db = st.session_state.df[st.session_state.df["actual"].isna()].reset_index(drop=True)
+    st.data_editor(
+        db,
+        key = "unclassified",
+        column_config={
+            "headline": st.column_config.TextColumn("Headline", width="small", disabled=True),  # "small" | "medium" | "large"
+            "link": st.column_config.LinkColumn("Profile", disabled=True, width="small"),
+            "name": st.column_config.TextColumn("Name", width="auto", disabled=True)
+            },
+        hide_index=True,
+        use_container_width=True
+        )
+    
+    if st.button("Run Classification"):
+        tmp_df = st.session_state.client.getDb(
+            ["name", "headline", "location", "link", "model", "actual", "full"]
+        ).copy()
 
-with col2:
-    st.header("Bad leads")
-    updated_unqual, selected_unqual = display_table(
-        st.session_state.df[st.session_state.df["actual"] == False],
-        "unqualified"
-    )
+        # mask of rows that need classification
+        mask = tmp_df["actual"].isna()
+        dataf = tmp_df[mask]  # optional, just for convenience
 
-# Merge edits back into session_state
-st.session_state.df.update(updated_qual)
-st.session_state.df.update(updated_unqual)
+        series = dataf["full"]   # convert to list before sending to your model
+        model = Model()
+        classes = model.run(series)
+        
+        # write results back into the original df
+        st.session_state.df.loc[mask, "actual"] = classes
+        st.session_state.df.loc[mask, "model"]  = classes
 
-# Show selected rows on button press
-if st.button("Update actual classification"):
-    selected_all = pd.concat([selected_qual, selected_unqual], ignore_index=True)
 
-    # if st.button("Change actual classification"):
-        # Change the actual classification here
-    for item in selected_all.to_dict(orient="records"):
-        count = client.update(
-            {"link": item["link"]}, 
-            {
-                "name": item["name"],
-                "headline": item["headline"],
-                "location": item["location"],
-                "link": item["link"],
-                "model": item["model"],
-                "actual": not item["actual"]
-            })
-    st.session_state.df = client.getDb()
-    st.write("Please now click the Reload Data button")
+        # st.write(st.session_state.df)
+        classified = st.session_state.df.to_dict(orient="records")
+        
+        for item in classified:
+            st.session_state.client.update({"link": item["link"]}, item)
+        # st.write(classified)
+        del st.session_state["client"]
+        st.rerun()

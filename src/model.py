@@ -27,6 +27,8 @@ class Model:
 
     def _genEmbeddings(self, text: pd.Series) -> np.ndarray:
         # Refactor the dataframe into an array of strings then feed self.model.encode(array_of_strings)
+        text = text.reset_index(drop=True)
+
         return self.model.encode(text)
 
     def _getProf(self) -> np.ndarray:

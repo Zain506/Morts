@@ -18,11 +18,20 @@ class Database:
         self.uri = uri
         self.df = None
 
-    def getDb(self): # Retrieve information from database
+    def getDb(self, params = ["name", "headline", "location", "link", "model", "actual"]): 
+        # Retrieve information from database
         client = MongoClient(self.uri)
         db = client["test"]["Leads"]
         cursor = db.find({}, {"_id": 0})
-        df = pd.DataFrame(list(cursor))[["name", "headline", "location", "link", "model", "actual"]]
+        df = pd.DataFrame(list(cursor))
+
+        # make sure all params exist
+        for col in params:
+            if col not in df.columns:
+                df[col] = pd.NA
+
+        # select only the params columns
+        df = df[params]
         self.df = df
         client.close()
         return df
