@@ -66,23 +66,23 @@ with tab3:
         tmp_df = st.session_state.client.getDb(
             ["name", "headline", "location", "link", "model", "actual", "full"]
         ).copy()
-
         # mask of rows that need classification
         mask = tmp_df["actual"].isna()
         dataf = tmp_df[mask]  # optional, just for convenience
 
-        series = dataf["full"]   # convert to list before sending to your model
+        series = dataf["full"]
+
         model = Model()
         classes = model.run(series)
-        
+        st.write(classes)
         # write results back into the original df
-        st.session_state.df.loc[mask, "actual"] = classes
-        st.session_state.df.loc[mask, "model"]  = classes
-
+        tmp_df.loc[mask, "actual"] = classes.values
+        tmp_df.loc[mask, "model"] = classes.values
 
         # st.write(st.session_state.df)
-        classified = st.session_state.df.to_dict(orient="records")
-        
+        classified = tmp_df.loc[mask].to_dict(orient="records")
+        st.write(classified)
+        # st.write(dataf["full"])
         for item in classified:
             st.session_state.client.update({"link": item["link"]}, item)
         # st.write(classified)

@@ -25,11 +25,25 @@ class Model:
         return self._construct(classes)
 
 
-    def _genEmbeddings(self, text: pd.Series) -> np.ndarray:
-        # Refactor the dataframe into an array of strings then feed self.model.encode(array_of_strings)
-        text = text.reset_index(drop=True)
+    def _genEmbeddings(self, text_series):
+        """
+        text_series: pandas Series of text
+        Returns: embeddings
+        """
+        import pandas as pd
 
-        return self.model.encode(text)
+        if isinstance(text_series, pd.Series):
+            # Convert all values to strings, replace NaN with empty string
+            text_series = text_series.fillna("").astype(str).tolist()
+        else:
+            # Fallback for a single string or list
+            if isinstance(text_series, list):
+                text_series = [str(t) if t is not None else "" for t in text_series]
+            else:
+                text_series = str(text_series) if text_series is not None else ""
+        
+        return self.model.encode(text_series)
+
 
     def _getProf(self) -> np.ndarray:
         # Provie 2 example profiles, generate embeddings and store in array
