@@ -3,4 +3,4 @@ pymongo
 numpy
 pandas
 streamlit
-transformers
+sentence-transformers
