@@ -74,14 +74,14 @@ with tab3:
 
         model = Model()
         classes = model.run(series)
-        st.write(classes)
+        # st.write(classes)
         # write results back into the original df
         tmp_df.loc[mask, "actual"] = classes.values
         tmp_df.loc[mask, "model"] = classes.values
 
         # st.write(st.session_state.df)
         classified = tmp_df.loc[mask].to_dict(orient="records")
-        st.write(classified)
+        # st.write(classified)
         # st.write(dataf["full"])
         for item in classified:
             st.session_state.client.update({"link": item["link"]}, item)
